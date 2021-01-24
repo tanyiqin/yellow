@@ -1,0 +1,7 @@
+package consts
+
+import "time"
+
+const (
+	GateEtcdKeepAliceLease = 10 * time.Second
+)

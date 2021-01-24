@@ -1,0 +1,6 @@
+gate:
+  inneraddr: "127.0.0.1:8090"
+  outeraddr: "127.0.0.1:8091"
+  gateid: 1
+etcd:
+  endpoints: ["127.0.0.1:2379"]
