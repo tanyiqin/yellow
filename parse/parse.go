@@ -5,10 +5,12 @@ import (
 	"encoding/binary"
 	"fmt"
 	"github.com/golang/protobuf/proto"
+	"github.com/tanyiqin/packet"
 	"reflect"
 )
 
 type Processor struct {
+	*packet.MsgPacket
 	littleEndian bool
 	msgMap map[uint16]*msgInfo
 	msgID map[reflect.Type]uint16
@@ -25,6 +27,7 @@ func NewProcessor(op ...Op) *Processor {
 		littleEndian: false,
 		msgMap: make(map[uint16]*msgInfo),
 		msgID: make(map[reflect.Type]uint16),
+		MsgPacket: packet.NewPacket(),
 	}
 	for _, f := range op {
 		f(p)
@@ -99,5 +102,3 @@ func (p *Processor) UnMarshal(data []byte) (interface{}, error) {
 	msg := reflect.New(p.msgMap[id].msgType.Elem()).Interface()
 	return msg, proto.UnmarshalMerge(data[2:], msg.(proto.Message))
 }
-
-
