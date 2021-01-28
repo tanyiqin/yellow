@@ -14,26 +14,24 @@ type Server struct {
 	// 服务类型
 	tag int
 	// 连接管理
-	sm *SessMgr
+	Sm *SessMgr
 	// 编解码
 	Processor *parse.Processor
-	handler handleFunc
 }
 
-type handleFunc func(*Session)
+type HandleSession func(*Session, int)
 
-func NewServer(ctx context.Context, Addr string, tag int, h handleFunc) *Server{
+func NewServer(ctx context.Context, Addr string, tag int) *Server{
 	s := &Server{
 		ctx: ctx,
 		Addr: Addr,
 		tag: tag,
-		sm: NewSessMgr(),
-		handler: h,
+		Sm: NewSessMgr(),
 	}
 	return s
 }
 
-func (s *Server)Serve() {
+func (s *Server)Serve(handle HandleSession) {
 	// 开启loop循环 接受连接
 	lis, err := net.Listen("tcp", s.Addr)
 	if err != nil {
@@ -64,16 +62,12 @@ func (s *Server)Serve() {
 			log.Error("bad accept, accept err = ", err)
 		} else {
 			timeDelay = 0
-			sess, err := s.sm.NewSession(conn, s.Processor)
+			sess, err := s.Sm.NewSession(conn, s.Processor)
 			if err != nil {
 				conn.Close()
 			} else {
-				go s.handler(sess)
+				go handle(sess, s.tag)
 			}
 		}
 	}
-}
-
-func handlerClient(session *Session) {
-
 }

@@ -2,12 +2,12 @@ package net
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"math/rand"
 	"net"
 	"sync"
 	"sync/atomic"
-	"yellow/consts"
-	"yellow/log"
 	"yellow/parse"
 )
 
@@ -22,13 +22,13 @@ type Session struct {
 	// 自身的ID
 	id uint32
 	// 连接的对端ID
-	remoteID uint32
+	RemoteID uint32
 	// 编解码
 	Processor *parse.Processor
 	// 统一通过Channel来接收发消息
 	RecvChan chan []byte
 	// ctx
-	ctx context.Context
+	Ctx context.Context
 	cancel context.CancelFunc
 	// 是否关闭
 	closeFlag bool
@@ -41,57 +41,16 @@ type SessMgr struct {
 	mutex sync.RWMutex
 }
 
-func (s *Session) Run(tag int){
-	go s.StartReader(tag)
-	go s.StartWriter(tag)
-	for {
-		select {
-			case <- s.ctx.Done():
-		}
+func (s *Session) Send(data[]byte) error {
+	if s.closeFlag {
+		return errors.New("sess closed")
 	}
+	s.RecvChan <- data
+	return nil
 }
 
-func (s *Session)StartReader(tag int) {
-	defer s.Stop()
-	for {
-		data, err := s.Processor.Read(s.Conn)
-		if err != nil {
-			log.Error("read msg error, err = ", err)
-			break
-		}
-		_sid, msg, err := s.Processor.UnMarshal(data)
-		if err != nil {
-			log.Error("parse msg error, err = ", err)
-			break
-		}
-		// 根据tag不同 不同处理
-		switch tag {
-			// 如果该连接 是由玩家连接到此的 需要根据session自身的id发送到对应的game中
-			case consts.TagClient:
-				// 如果remoteID = 0 说明刚进行连接 需要分配一个remoteID
-				if s.remoteID == 0 {
-					s.remoteID = 1
-				}
-				remoteSession =
-
-		}
-	}
-}
-
-func (s *Session) StartWriter(tag int) {
-	defer s.Stop()
-	for {
-		select{
-			case data := <- s.RecvChan:
-				_, err := s.Conn.Write(data)
-				if err != nil {
-					log.Error("write msg err, err = ", err)
-					return
-				}
-			case <- s.ctx.Done():
-				return
-		}
-	}
+func (s *Session) ID() uint32{
+	return s.id
 }
 
 func (s *Session)Stop() {
@@ -118,7 +77,7 @@ func (sm *SessMgr)NewSession(conn net.Conn, processor *parse.Processor) (*Sessio
 		id: atomic.AddUint32(&sessionGlobalID, 1),
 		Processor: processor,
 		manager: sm,
-		ctx: ctx,
+		Ctx: ctx,
 		cancel: cancel,
 		RecvChan: make(chan []byte),
 		closeFlag:false,
@@ -144,6 +103,10 @@ func (sm *SessMgr)DelSession(id uint32) {
 	defer sm.mutex.Unlock()
 	sm.mutex.Lock()
 	delete(sm.SessSet, id)
+}
+
+func (sm *SessMgr)RandomSessID() uint32{
+	return rand.Uint32() % uint32(len(sm.SessSet))
 }
 
 func (sm *SessMgr)Stop() {
