@@ -65,7 +65,7 @@ func (p *Processor) Register(msg proto.Message) error {
 	return nil
 }
 
-func (p *Processor) Marshal(msg interface{}) ([]byte, error) {
+func (p *Processor) Marshal(_sid uint32, msg interface{}) ([]byte, error) {
 	msgType := reflect.TypeOf(msg)
 
 	_id, ok := p.msgID[msgType]
@@ -80,25 +80,40 @@ func (p *Processor) Marshal(msg interface{}) ([]byte, error) {
 		binary.BigEndian.PutUint16(id, _id)
 	}
 
+	sid := make([]byte, 4)
+	if p.littleEndian {
+		binary.LittleEndian.PutUint32(sid, _sid)
+	} else {
+		binary.BigEndian.PutUint32(sid, _sid)
+	}
+
 	data, err := proto.Marshal(msg.(proto.Message))
 	if err != nil {
 		return nil, err
 	}
-	return bytes.Join([][]byte{id, data}, []byte("")), nil
+	return bytes.Join([][]byte{id, sid, data}, []byte("")), nil
 }
 
-func (p *Processor) UnMarshal(data []byte) (interface{}, error) {
-	if len(data) < 2 {
-		return nil, fmt.Errorf("protobuf data too short")
+func (p *Processor) UnMarshal(data []byte) (uint32, interface{}, error) {
+	if len(data) < 6 {
+		return 0, nil, fmt.Errorf("protobuf data too short")
 	}
 
+	// 消息id字段
 	var id uint16
 	if p.littleEndian {
 		id = binary.LittleEndian.Uint16(data)
 	} else {
 		id = binary.BigEndian.Uint16(data)
 	}
+	// session id 字段
+	var sid uint32
+	if p.littleEndian {
+		sid = binary.LittleEndian.Uint32(data[2:])
+	} else {
+		sid = binary.BigEndian.Uint32(data[2:])
+	}
 
 	msg := reflect.New(p.msgMap[id].msgType.Elem()).Interface()
-	return msg, proto.UnmarshalMerge(data[2:], msg.(proto.Message))
+	return sid, msg, proto.UnmarshalMerge(data[6:], msg.(proto.Message))
 }

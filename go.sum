@@ -125,6 +125,8 @@ github.com/stretchr/testify v1.3.0 h1:TivCn/peBQ7UY8ooIcPgZFpTNSz0Q2U6UrFlUfqbe0
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 github.com/tanyiqin/lb v0.0.0-20210123085645-5b508f6c1fed h1:T8a9a5D8TEMR3t1PFOG3WYecVY7+qZ0t6R1ByHpjg/4=
 github.com/tanyiqin/lb v0.0.0-20210123085645-5b508f6c1fed/go.mod h1:1ID5rLAsVqG/VnJYwGwbDdWxLlOObHLJZzcCwSk+L6w=
+github.com/tanyiqin/packet v0.0.0-20210124114052-a19c83c24c06 h1:pAyIB/p4UuB6vcu7c/5n6Lf1kuKjhDcF5Siq08MAFaI=
+github.com/tanyiqin/packet v0.0.0-20210124114052-a19c83c24c06/go.mod h1:yGMRvfP2RIefeNP3IpYrKKf06SbEq9x7T8k8/sYqySM=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20170815181823-89b8d40f7ca8 h1:ndzgwNDnKIqyCvHTXaCqh9KlOWKvBry6nuXMJmonVsE=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20170815181823-89b8d40f7ca8/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
 github.com/urfave/cli v1.20.0/go.mod h1:70zkFmudgCuE/ngEzBv17Jvp/497gISqfk5gWijbERA=

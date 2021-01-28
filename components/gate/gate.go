@@ -3,11 +3,12 @@ package gate
 import (
 	"context"
 	"fmt"
-	"net"
-	"time"
 	"yellow/cluster"
-	"yellow/log"
+	"yellow/consts"
+	"yellow/net"
 )
+
+
 
 type gate struct {
 	InnerAddr string
@@ -43,39 +44,10 @@ func (g *gate) Run() {
 	cluster.EtcdRegister(g.ctx, g.EndPoints, "gates/out" + g.GateName(), g.OuterAddr)
 	cluster.EtcdRegister(g.ctx, g.EndPoints, "gates/in" + g.GateName(), g.InnerAddr)
 
-	// 开启loop循环 接受玩家的连接
-	lis, err := net.Listen("tcp", g.OuterAddr)
-	if err != nil {
-		log.Panic("error in listen, err = ", err)
-	}
-	var timeDelay time.Duration
-	for {
-		conn, err := lis.Accept()
-		if err != nil {
-			if tempErr, ok := err.(*net.OpError); ok && tempErr.Temporary(){
-				if timeDelay == 0 {
-					timeDelay = 5 * time.Millisecond
-				} else {
-					timeDelay *= 2
-				}
-				if max := 1 * time.Second; timeDelay > max {
-					timeDelay = max
-				}
-				timer := time.NewTimer(timeDelay)
-				select {
-					case <- timer.C:
-					case <-g.ctx.Done():
-						timer.Stop()
-						return
-				}
-				continue
-			}
-			log.Error("bad accept, accept err = ", err)
-		} else {
-			timeDelay = 0
-			sess := cluster.NewSession(conn, g.cluster)
-			go sess.Run()
-		}
-	}
+	clientServer := net.NewServer(g.ctx, g.OuterAddr, consts.TagClient)
+	go clientServer.Serve()
+	serverServer := net.NewServer(g.ctx, g.InnerAddr, consts.TagServer)
+	go serverServer.Serve()
+
 }
 
